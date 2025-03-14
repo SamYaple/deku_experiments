@@ -1,7 +1,8 @@
 use anyhow::{bail, Result};
+use std::sync::Arc;
 use std::ffi::CString;
 use std::fs::{File, OpenOptions};
-use std::os::fd::{IntoRawFd, FromRawFd};
+use std::os::fd::{IntoRawFd, FromRawFd, AsRawFd};
 use std::io;
 
 // VFIO definitions (from linux/vfio.h and friends)
@@ -38,11 +39,89 @@ pub(crate) struct vfio_region_info {
     pub(crate) offset: u64,
 }
 
-//struct VfioContainer {
-//    container: File,
-//}
-//
-//impl VfioContainer {}
+pub(crate) struct VfioContainer {
+    fd: Arc<File>,
+}
+
+impl VfioContainer {
+    pub(crate) fn new() -> Result<Self> {
+        let mut vfio_container = Self::init()?;
+        vfio_container.check()?;
+        Ok(vfio_container)
+    }
+
+    fn init() -> Result<Self> {
+        println!("Initializing VFIO-based NVMe communication...");
+        let container = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open("/dev/vfio/vfio")?;
+        Ok(Self {fd: Arc::new(container)})
+    }
+
+    fn check(&self) -> Result<()> {
+        let container_fd = self.fd.as_raw_fd();
+
+        // check api version
+        let api_version = get_api_version(container_fd)?;
+        println!("VFIO API version: {}", api_version);
+        if api_version != VFIO_API_VERSION_EXPECTED {
+            bail! {"VFIO API version mismatch"};
+        }
+
+        // check expected expected extension
+        if !check_extension(container_fd, VFIO_IOMMU_TYPE1V2)? {
+            bail! {"VFIO TYPE1v2 IOMMU not supported"};
+        }
+        println!("VFIO supports TYPE1v2 IOMMU");
+
+        //self.fd = unsafe { File::from_raw_fd(container_fd) };
+        Ok(())
+    }
+
+    // group_path == "/dev/vfio/42"
+    // device_str == "0000:02:00.0"
+    pub(crate) fn open_device(&self, group_path: &str, device_str: &str) -> Result<File> {
+        let group = OpenOptions::new().read(true).write(true).open(group_path)?;
+        let group_fd = group.as_raw_fd();
+
+        // Query VFIO group status.
+        let mut group_status = vfio_group_status {
+            argsz: std::mem::size_of::<vfio_group_status>() as u32,
+            flags: 0,
+        };
+        let ret = unsafe { libc::ioctl(group_fd, VFIO_GROUP_GET_STATUS, &mut group_status) };
+        if ret < 0 {
+            bail! {io::Error::last_os_error()};
+        }
+        if group_status.flags & VFIO_GROUP_FLAGS_VIABLE == 0 {
+            bail! {"VFIO group not viable"};
+        }
+        println!("VFIO group is viable");
+
+        // Associate the VFIO group with the container
+        let container_fd = self.fd.as_raw_fd();
+        let ret = unsafe { libc::ioctl(group_fd, VFIO_GROUP_SET_CONTAINER, &container_fd) };
+        if ret < 0 {
+            bail! {io::Error::last_os_error()};
+        }
+        println!("VFIO group associated with container");
+
+        // Set the IOMMU type
+        set_iommu(container_fd, VFIO_IOMMU_TYPE1V2)?;
+        println!("IOMMU set to TYPE1V2");
+
+        let device_str = CString::new(device_str)?;
+        let device_fd = unsafe { libc::ioctl(group_fd, VFIO_GROUP_GET_DEVICE_FD, device_str.as_ptr()) };
+        if device_fd < 0 {
+            bail! {"Failed to get device FD"};
+        }
+        println!("Obtained VFIO device FD: {}", device_fd);
+
+        let device = unsafe { File::from_raw_fd(device_fd) };
+        Ok(device)
+    }
+}
 
 // helper fns
 fn get_api_version(fd: i32) -> io::Result<u32> {
@@ -87,75 +166,4 @@ pub(crate) fn get_region_info(device_fd: i32) -> io::Result<vfio_region_info> {
     }
 
     Ok(region_info)
-}
-
-pub(crate) fn setup_vfio() -> Result<File, anyhow::Error> {
-    println!("Initializing VFIO-based NVMe communication...");
-
-    let container = OpenOptions::new()
-        .read(true)
-        .write(true)
-        .open("/dev/vfio/vfio")?;
-    let container_fd = container.into_raw_fd();
-
-    // check api version
-    let api_version = get_api_version(container_fd)?;
-    println!("VFIO API version: {}", api_version);
-    if api_version != VFIO_API_VERSION_EXPECTED {
-        bail! {"VFIO API version mismatch"};
-    }
-
-    // check expected expected extension
-    if !check_extension(container_fd, VFIO_IOMMU_TYPE1V2)? {
-        bail! {"VFIO TYPE1v2 IOMMU not supported"};
-    }
-    println!("VFIO supports TYPE1v2 IOMMU");
-
-    let container = unsafe { File::from_raw_fd(container_fd) };
-    Ok(container)
-}
-
-// group_path == "/dev/vfio/42"
-// device_str == "0000:02:00.0"
-pub(crate) fn open_device(vfio_container: File, group_path: &str, device_str: &str) -> Result<File, anyhow::Error> {
-    let group = OpenOptions::new().read(true).write(true).open(group_path)?;
-    let group_fd = group.into_raw_fd();
-
-    // Query VFIO group status.
-    let mut group_status = vfio_group_status {
-        argsz: std::mem::size_of::<vfio_group_status>() as u32,
-        flags: 0,
-    };
-    let ret = unsafe { libc::ioctl(group_fd, VFIO_GROUP_GET_STATUS, &mut group_status) };
-    if ret < 0 {
-        bail! {io::Error::last_os_error()};
-    }
-    if group_status.flags & VFIO_GROUP_FLAGS_VIABLE == 0 {
-        bail! {"VFIO group not viable"};
-    }
-    println!("VFIO group is viable");
-
-    // Associate the VFIO group with the container
-    let container_fd = vfio_container.into_raw_fd();
-    let ret = unsafe { libc::ioctl(group_fd, VFIO_GROUP_SET_CONTAINER, &container_fd) };
-    if ret < 0 {
-        bail! {io::Error::last_os_error()};
-    }
-    println!("VFIO group associated with container");
-
-    // Set the IOMMU type
-    set_iommu(container_fd, VFIO_IOMMU_TYPE1V2)?;
-    println!("IOMMU set to TYPE1");
-
-    // Open the vfio device (/dev/vfio/42). Make sure your permissions and ownership on the device
-    // work for your user.
-    let device_str = CString::new(device_str)?;
-    let device_fd = unsafe { libc::ioctl(group_fd, VFIO_GROUP_GET_DEVICE_FD, device_str.as_ptr()) };
-    if device_fd < 0 {
-        bail! {"Failed to get device FD"};
-    }
-    println!("Obtained VFIO device FD: {}", device_fd);
-
-    let device = unsafe { File::from_raw_fd(device_fd) };
-    Ok(device)
 }

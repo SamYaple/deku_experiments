@@ -3,7 +3,7 @@ use anyhow::{bail, Result};
 use std::io;
 use std::ptr;
 use std::os::fd::IntoRawFd;
-use vfio::{get_region_info, setup_vfio, open_device};
+use vfio::{get_region_info, VfioContainer};
 
 
 // what is up with these names 😨
@@ -25,8 +25,8 @@ struct NvmeRegs {
 }
 
 fn main() -> Result<()> {
-    let vfio_container = setup_vfio()?;
-    let device = open_device(vfio_container, "/dev/vfio/42", "0000:02:00.0")?;
+    let vfio_container = VfioContainer::new()?;
+    let device = vfio_container.open_device("/dev/vfio/42", "0000:02:00.0")?;
     let device_fd = device.into_raw_fd();
     let region_info = get_region_info(device_fd)?;
     println!(
@@ -51,6 +51,7 @@ fn main() -> Result<()> {
     }
     println!("Mapped BAR region at: {:?}", mapped_ptr);
 
+    // Cast returned pointer as NvmeRegs type
     let nvme_regs = mapped_ptr as *mut NvmeRegs;
     let cap = unsafe { ptr::read_volatile(&(*nvme_regs).cap) };
     let vs = unsafe { ptr::read_volatile(&(*nvme_regs).vs) };
