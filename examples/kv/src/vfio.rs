@@ -51,7 +51,6 @@ impl VfioContainer {
     }
 
     fn init() -> Result<Self> {
-        println!("Initializing VFIO-based NVMe communication...");
         let container = OpenOptions::new()
             .read(true)
             .write(true)
@@ -64,7 +63,6 @@ impl VfioContainer {
 
         // check api version
         let api_version = get_api_version(container_fd)?;
-        println!("VFIO API version: {}", api_version);
         if api_version != VFIO_API_VERSION_EXPECTED {
             bail! {"VFIO API version mismatch"};
         }
@@ -73,7 +71,6 @@ impl VfioContainer {
         if !check_extension(container_fd, VFIO_IOMMU_TYPE1V2)? {
             bail! {"VFIO TYPE1v2 IOMMU not supported"};
         }
-        println!("VFIO supports TYPE1v2 IOMMU");
 
         //self.fd = unsafe { File::from_raw_fd(container_fd) };
         Ok(())
@@ -81,7 +78,7 @@ impl VfioContainer {
 
     // group_path == "/dev/vfio/42"
     // device_str == "0000:02:00.0"
-    pub(crate) fn open_device(&self, group_path: &str, device_str: &str) -> Result<File> {
+    pub(crate) fn open_device(&self, group_path: &str, device_str: &str) -> Result<(File, vfio_region_info)> {
         let group = OpenOptions::new().read(true).write(true).open(group_path)?;
         let group_fd = group.as_raw_fd();
 
@@ -97,7 +94,6 @@ impl VfioContainer {
         if group_status.flags & VFIO_GROUP_FLAGS_VIABLE == 0 {
             bail! {"VFIO group not viable"};
         }
-        println!("VFIO group is viable");
 
         // Associate the VFIO group with the container
         let container_fd = self.fd.as_raw_fd();
@@ -105,25 +101,38 @@ impl VfioContainer {
         if ret < 0 {
             bail! {io::Error::last_os_error()};
         }
-        println!("VFIO group associated with container");
 
         // Set the IOMMU type
         set_iommu(container_fd, VFIO_IOMMU_TYPE1V2)?;
-        println!("IOMMU set to TYPE1V2");
 
+        // Get descriptor for device
         let device_str = CString::new(device_str)?;
         let device_fd = unsafe { libc::ioctl(group_fd, VFIO_GROUP_GET_DEVICE_FD, device_str.as_ptr()) };
         if device_fd < 0 {
             bail! {"Failed to get device FD"};
         }
-        println!("Obtained VFIO device FD: {}", device_fd);
-
         let device = unsafe { File::from_raw_fd(device_fd) };
-        Ok(device)
+
+        let mut region_info = vfio_region_info {
+            argsz: std::mem::size_of::<vfio_region_info>() as u32,
+            flags: 0,
+            index: 0, // TODO: fix hardcoded BAR0
+            cap_offset: 0,
+            size: 0,
+            offset: 0,
+        };
+
+        let device_fd = device.as_raw_fd();
+        let ret = unsafe { libc::ioctl(device_fd, VFIO_DEVICE_GET_REGION_INFO, &mut region_info) };
+        if ret < 0 {
+            bail! {io::Error::last_os_error()};
+        }
+
+        Ok((device, region_info))
     }
 }
 
-// helper fns
+// TODO: Refactor
 fn get_api_version(fd: i32) -> io::Result<u32> {
     let ret = unsafe { libc::ioctl(fd, VFIO_GET_API_VERSION_IOCTL) };
     if ret < 0 {
@@ -149,21 +158,4 @@ fn set_iommu(fd: i32, iommu_type: u32) -> io::Result<()> {
     } else {
         Ok(())
     }
-}
-
-pub(crate) fn get_region_info(device_fd: i32) -> io::Result<vfio_region_info> {
-    let mut region_info = vfio_region_info {
-        argsz: std::mem::size_of::<vfio_region_info>() as u32,
-        flags: 0,
-        index: 0, // TODO: fix hardcoded BAR0
-        cap_offset: 0,
-        size: 0,
-        offset: 0,
-    };
-    let ret = unsafe { libc::ioctl(device_fd, VFIO_DEVICE_GET_REGION_INFO, &mut region_info) };
-    if ret < 0 {
-        return Err(io::Error::last_os_error());
-    }
-
-    Ok(region_info)
 }

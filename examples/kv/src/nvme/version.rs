@@ -9,6 +9,6 @@ impl NvmeController {
 
     pub(crate) fn print_spec_version(&self) -> () {
         let (mjr, mnr, ter) = self.get_spec_version();
-        println!("NVMe specification version: {}.{}.{}", mjr, mnr, ter);
+        println!("NVMe spec version: {}.{}.{}", mjr, mnr, ter);
     }
 }

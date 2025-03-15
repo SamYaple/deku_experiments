@@ -1,8 +1,3 @@
-use anyhow::{bail, Result};
-use std::io;
-use std::ptr;
-use std::os::fd::AsRawFd;
-use std::fs::File;
 use super::NvmeController;
 
 impl NvmeController {

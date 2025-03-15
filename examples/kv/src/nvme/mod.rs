@@ -5,6 +5,7 @@ use std::io;
 use std::ptr;
 use std::os::fd::AsRawFd;
 use std::fs::File;
+use std::sync::Arc;
 
 #[repr(C)]
 struct NvmeRegisters {
@@ -25,41 +26,32 @@ struct NvmeRegisters {
 
 pub(crate) struct NvmeController {
     // this is the file handle for the pcie device (through vfio)
-    device: File,
-
-    // see the nvme spec for the registers available
+    device: Arc<File>,
     registers: *mut NvmeRegisters,
-
-    // TODO: enum for this if we ever get beyond vfio access
-    region_info: crate::vfio::vfio_region_info,
 }
 
 impl NvmeController {
-    pub(crate) fn new(device: File) -> Result<Self> {
+    pub(crate) fn new(device: File, region_size: u64, region_offset: u64) -> Result<Self> {
+        let device = Arc::new(device);
         let device_fd = device.as_raw_fd();
-        let region_info = crate::vfio::get_region_info(device_fd)?;
-        println!("Region Info: size = 0x{:x}, offset = 0x{:x}", region_info.size, region_info.offset);
-
         let mapped_ptr = unsafe {
             libc::mmap(
                 ptr::null_mut(),
-                region_info.size as usize,
+                region_size as usize,
                 libc::PROT_READ | libc::PROT_WRITE,
                 libc::MAP_SHARED,
                 device_fd,
-                region_info.offset as libc::off_t,
+                region_offset as libc::off_t,
             )
         };
         if mapped_ptr == libc::MAP_FAILED {
             bail! {io::Error::last_os_error()};
         }
-        //println!("Mapped BAR region at: {:?}", mapped_ptr);
 
         let registers = mapped_ptr as *mut NvmeRegisters;
         Ok(Self {
             device,
             registers,
-            region_info,
         })
     }
 
