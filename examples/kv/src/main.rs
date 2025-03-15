@@ -9,5 +9,6 @@ fn main() -> Result<()> {
     let device = vfio_container.open_device("/dev/vfio/42", "0000:02:00.0")?;
     let mut controller = NvmeController::new(device)?;
     controller.print_caps_table();
+    controller.print_spec_version();
     Ok(())
 }
