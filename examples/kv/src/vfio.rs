@@ -2,7 +2,7 @@ use anyhow::{bail, Result};
 use std::sync::Arc;
 use std::ffi::CString;
 use std::fs::{File, OpenOptions};
-use std::os::fd::{IntoRawFd, FromRawFd, AsRawFd};
+use std::os::fd::{FromRawFd, AsRawFd};
 use std::io;
 
 // VFIO definitions (from linux/vfio.h and friends)
@@ -45,7 +45,7 @@ pub(crate) struct VfioContainer {
 
 impl VfioContainer {
     pub(crate) fn new() -> Result<Self> {
-        let mut vfio_container = Self::init()?;
+        let vfio_container = Self::init()?;
         vfio_container.check()?;
         Ok(vfio_container)
     }
