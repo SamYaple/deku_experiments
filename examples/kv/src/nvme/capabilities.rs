@@ -3,87 +3,9 @@ use std::io;
 use std::ptr;
 use std::os::fd::AsRawFd;
 use std::fs::File;
-
-#[repr(C)]
-struct NvmeRegisters {
-    cap:    u64,
-    vs:     u32,
-    intms:  u32,
-    intmc:  u32,
-    cc:     u32,
-    rsvd:   u32,
-    csts:   u32,
-    nssr:   u32,
-    aqa:    u32,
-    asq:    u64,
-    acq:    u64,
-    cmbloc: u32,
-    cmbsz:  u32,
-}
-
-pub(crate) struct NvmeController {
-    // this is the file handle for the pcie device (through vfio)
-    device: File,
-
-    // see the nvme spec for the registers available
-    registers: *mut NvmeRegisters,
-
-    // TODO: enum for this if we ever get beyond vfio access
-    region_info: crate::vfio::vfio_region_info,
-}
+use super::NvmeController;
 
 impl NvmeController {
-    pub(crate) fn new(device: File) -> Result<Self> {
-        let device_fd = device.as_raw_fd();
-        let region_info = crate::vfio::get_region_info(device_fd)?;
-        println!(
-            "Region Info: size = 0x{:x}, offset = 0x{:x}",
-            region_info.size, region_info.offset
-        );
-
-        // Memory-map the BAR region.
-        let mapped_size = region_info.size as usize;
-        let mapped_ptr = unsafe {
-            libc::mmap(
-                ptr::null_mut(),
-                mapped_size,
-                libc::PROT_READ | libc::PROT_WRITE,
-                libc::MAP_SHARED,
-                device_fd,
-                region_info.offset as libc::off_t,
-            )
-        };
-        if mapped_ptr == libc::MAP_FAILED {
-            bail! {io::Error::last_os_error()};
-        }
-        println!("Mapped BAR region at: {:?}", mapped_ptr);
-
-        let registers = mapped_ptr as *mut NvmeRegisters;
-        Ok(Self {
-            device,
-            registers,
-            region_info,
-        })
-    }
-
-    fn read_vs(&self) -> u32 {
-        let vs = unsafe { ptr::read_volatile(&(*self.registers).vs) };
-        vs
-    }
-
-    // prior to nvme spec 1.2.1, the "ter" version number is reserved space and not used
-    pub(crate) fn get_version(&self) -> (u16, u8, u8) {
-        let mjr = ((self.read_vs() >> 16) & 0b1111_1111_1111_1111) as u16;
-        let mnr = ((self.read_vs() >> 8)  & 0b1111_1111) as u8;
-        let ter = ((self.read_vs() >> 0)  & 0b1111_1111) as u8;
-        (mjr, mnr, ter)
-    }
-
-    fn read_cap(&self) -> u64 {
-        let cap = unsafe { ptr::read_volatile(&(*self.registers).cap) };
-        cap
-    }
-
     fn cap_reserved_63_58(&self) -> u8 {
         ((self.read_cap() >> 58) & 0b11_1111) as u8
     }
@@ -132,6 +54,7 @@ impl NvmeController {
         ((self.read_cap() >> 19) & 0b1_1111) as u8
     }
 
+    // TODO: Do this... differently. I dont like it
     pub(crate) fn cap_ams(&self) -> (bool, bool) {
         // Weighted Round Robin with Urgent Priority Class
         let wrrups = ((self.read_cap() >> 18) & 0b1) != 0;
