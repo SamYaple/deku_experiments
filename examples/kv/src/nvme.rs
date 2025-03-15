@@ -151,128 +151,45 @@ impl NvmeController {
         ((self.read_cap() >> 0) & 0b1111_1111_1111_1111) as u16
     }
 
-    pub(crate) fn print_caps(&self) -> () {
-        println!("============================");
-        println!("Dumping nvme capabilities...");
-
-        if self.cap_cmbs() {
-            println!("CMBS is supported");
-        }
-
-        if self.cap_pmbs() {
-            println!("PMBS is supported");
-        }
-
-        let mpsmax = self.cap_mpsmax();
-        dbg![mpsmax];
-
-        let mpsmin = self.cap_mpsmin();
-        dbg![mpsmin];
-
-        if self.cap_bps() {
-            println!("BPS is supported");
-        }
-
-        // TODO fix css spec
-        //let css = self.cap_css() {}
-
-        if self.cap_nssrs() {
-            println!("NNSRS is supported");
-        }
-
-        let dstrd = self.cap_dstrd();
-        dbg![dstrd];
-
-        let to = self.cap_to();
-        dbg![to];
-        println!("TO -- Timeout: {} seconds", to as u64 * 500 / 1000);
-
-        let (ams_wrrups, ams_vendor) = self.cap_ams();
-        if ams_wrrups {
-            println!("AMS supports 'Weighted Round Robin with Urgent Priority Class'");
-        }
-        if ams_vendor {
-            println!("AMS supports a vendor specific arbitration mechanism");
-        }
-        if self.cap_cqr() {
-            println!("CQR is set; the controller requires I/O queues to be physically contiguous");
-        } else {
-            println!("CQR is unset; the controller does not require I/O queues to be physically contiguous");
-        }
-
-        let mqes = self.cap_mqes();
-        dbg![mqes];
-        println!("============================");
-    }
-
     pub(crate) fn print_caps_table(&self) {
-        println!("+----------------------------------------------+");
-        println!("|              NVMe Capabilities               |");
-        println!("+----------------------------+-----------------+");
+        println!("+-----------------------------------------------------+");
+        println!("| NVMe Capabilities                                   |");
+        println!("+--------+-------+------------------------------------+");
+        println!("| Name   | Value | Description                        |");
+        println!("+--------+-------+------------------------------------+");
 
-        // Example: CMBS
-        print_table_row(
-            "CMBS",
-            if self.cap_cmbs() { "Supported" } else { "Not supported" },
-        );
+        print_table_row("CMBS", self.cap_cmbs(), "Controller Memory Buffer Supported");
+        print_table_row("PMBS", self.cap_pmbs(), "Persistent Memory Region Supported");
+        print_table_row("MPSMAX", self.cap_mpsmax(), "Memory Page Size Maximum");
+        print_table_row("MPSMIN", self.cap_mpsmin(), "Memory Page Size Minimum");
+        print_table_row("BPS", self.cap_bps(), "Boot Partition Support");
 
-        // PMBS
-        print_table_row(
-            "PMBS",
-            if self.cap_pmbs() { "Supported" } else { "Not supported" },
-        );
+        // TODO: CSS
+        // print_table_row("CSS", self.cap_css(), "Command Sets Supported");
+        print_table_row("NSSRS", self.cap_nssrs(), "NVM Subsystem Reset Supported");
+        print_table_row("DSTRD", self.cap_dstrd(), "Doorbell Stride");
+        print_table_row("TO", self.cap_to(), "Timeout (500ms units)");
 
-        // BPS
-        print_table_row(
-            "BPS",
-            if self.cap_bps() { "Supported" } else { "Not supported" },
-        );
+        // TODO: print small bit table somehow?
+        //let (ams_wrrups, ams_vendor) = self.cap_ams();
+        //print_table_row(
+        //    "AMS (WRRUP)",
+        //    if ams_wrrups { "Y" } else { "N" },
+        //    "Weighted Round Robin with Urgent Priority Class",
+        //);
+        //print_table_row(
+        //    "AMS (Vendor)",
+        //    if ams_vendor { "Y" } else { "N" },
+        //    "Vendor Specific",
+        //);
 
-        // MPSMAX (numeric)
-        let mpsmax = self.cap_mpsmax();
-        print_table_row("MPSMAX", &mpsmax.to_string());
-
-        // MPSMIN (numeric)
-        let mpsmin = self.cap_mpsmin();
-        print_table_row("MPSMIN", &mpsmin.to_string());
-
-        // DSTRD (numeric)
-        let dstrd = self.cap_dstrd();
-        print_table_row("DSTRD", &dstrd.to_string());
-
-        // TO (in seconds)
-        let derived_to = format!("{} seconds", (self.cap_to() as u64 * 500 / 1000));
-        print_table_row("TO", &derived_to);
-
-        // AMS features
-        let (ams_wrrups, ams_vendor) = self.cap_ams();
-        print_table_row(
-            "AMS (WRRUP)",
-            if ams_wrrups { "Yes" } else { "No" },
-        );
-        print_table_row(
-            "AMS (Vendor)",
-            if ams_vendor { "Yes" } else { "No" },
-        );
-
-        // CQR
-        print_table_row(
-            "CQR",
-            if self.cap_cqr() { "Set" } else { "Unset" },
-        );
-
-        // MQES (numeric)
-        let mqes = self.cap_mqes();
-        print_table_row("MQES", &mqes.to_string());
-
-        println!("+----------------------------+-----------------+");
+        print_table_row("CQR", self.cap_cqr(), "Contiguous Queues Required");
+        print_table_row("MQES", self.cap_mqes(), "Maximum Queue Entries Supported");
+        println!("+--------+-------+------------------------------------+");
     }
 }
 
-fn print_table_row(name: &str, value: &str) {
-    // Adjust the widths below to suit your formatting.
-    // This example left-aligns the name in a 26-char field,
-    // then left-aligns the value in a 18-char field.
-    println!("| {:<26} | {:<15} |", name, value);
+fn print_table_row<T: ToString>(name: &str, value: T, description: &str) {
+    // {:<6} is left aligned with at least 6 chars. Shorter values are padded
+    println!("| {:<6} | {:>5} | {:<34} |", name, value.to_string(), description);
 }
-
