@@ -1,5 +1,6 @@
 mod capabilities;
 mod version;
+mod admin;
 use anyhow::{bail, Result};
 use std::io;
 use std::ptr;
@@ -54,14 +55,49 @@ impl NvmeController {
             registers,
         })
     }
+}
 
-    fn read_cap(&self) -> u64 {
-        let cap = unsafe { ptr::read_volatile(&(*self.registers).cap) };
-        cap
-    }
 
-    fn read_vs(&self) -> u32 {
-        let vs = unsafe { ptr::read_volatile(&(*self.registers).vs) };
-        vs
+use std::thread::sleep;
+use std::time::Duration;
+
+// Controller Configuration (CC) Register Bit Fields
+const NVME_CC_EN: u32 = 1 << 0;   // Enable bit
+const NVME_CC_IOCQES: u32 = 4 << 20; // Completion Queue Entry Size (4 = 16 bytes)
+const NVME_CC_IOSQES: u32 = 6 << 16; // Submission Queue Entry Size (6 = 64 bytes)
+
+// Controller Status (CSTS) Register Bit Fields
+const NVME_CSTS_RDY: u32 = 1 << 0; // Controller Ready bit
+
+
+impl NvmeController {
+    /// Enables the NVMe controller
+    pub fn enable_controller(&self) -> Result<()> {
+        // Ensure the controller is not already enabled
+        let current_cc = unsafe { std::ptr::read_volatile(&(*self.registers).cc) };
+        if (current_cc & NVME_CC_EN) != 0 {
+            bail!("Controller is already enabled");
+        }
+
+        // Program the CC register
+        let cc_value = NVME_CC_EN | NVME_CC_IOCQES | NVME_CC_IOSQES;
+        unsafe {
+            std::ptr::write_volatile(&mut (*self.registers).cc, cc_value);
+        }
+        println!("Controller Enable Command Issued");
+
+        // Poll CSTS register until the Ready bit (RDY) is set
+        let mut timeout = 100; // Timeout counter
+        while timeout > 0 {
+            let csts = unsafe { std::ptr::read_volatile(&(*self.registers).csts) };
+            if (csts & NVME_CSTS_RDY) != 0 {
+                println!("NVMe Controller is Ready");
+                return Ok(());
+            }
+            sleep(Duration::from_millis(10)); // Short delay before retry
+            timeout -= 1;
+        }
+
+        bail!("Timeout waiting for NVMe controller to become ready");
     }
 }

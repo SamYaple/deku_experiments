@@ -1,95 +1,105 @@
+use anyhow::{Result, bail};
+use deku::prelude::*;
 use super::NvmeController;
 
+#[derive(Debug, DekuRead)]
+#[deku(endian = "big")]
+pub(crate) struct NvmeCapabilities {
+    #[deku(bits = 6)]
+    _reserved_63_58: u8,
+
+    #[deku(bits = 1)]
+    cmbs: bool,
+
+    #[deku(bits = 1)]
+    pmrs: bool,
+
+    #[deku(bits = 4)]
+    mpsmax: u8,
+
+    #[deku(bits = 4)]
+    mpsmin: u8,
+
+    #[deku(bits = 2)]
+    _reserved_47_46: u8,
+
+    #[deku(bits = 1)]
+    bps: bool,
+
+    /// (Command Sets Supported) I/O Command Set
+    /// If css_io is set to true, then the I/O command set is available. If css_io is set to false,
+    /// then only the Admin Command Set is available.
+    #[deku(bits = 1, map = "|b: bool| -> Result<_, DekuError> { Ok(!b) }")]
+    css_io: bool,
+
+    #[deku(bits = 6)]
+    _reserved_43_38: u8,
+
+    /// (Command Sets Supported) NVM command set
+    #[deku(bits = 1)]
+    css_nvm: bool,
+
+    #[deku(bits = 1)]
+    nssrs: bool,
+
+    #[deku(bits = 4)]
+    dstrd: u8,
+
+    /// (TO) Timeout in 500ms units
+    #[deku(bits = 8)]
+    to: u8,
+
+    #[deku(bits = 5)]
+    _reserved_23_19: u8,
+
+    #[deku(bits = 1)]
+    ams_wrrups: bool,
+
+    #[deku(bits = 1)]
+    ams_vendor: bool,
+
+    #[deku(bits = 1)]
+    cqr: bool,
+
+    #[deku(bits = 16)]
+    mqes: u16,
+}
+
 impl NvmeController {
-    fn cap_reserved_63_58(&self) -> u8 {
-        ((self.read_cap() >> 58) & 0b11_1111) as u8
+    pub(crate) fn get_capabilities(&self) -> Result<NvmeCapabilities> {
+        let raw_value = unsafe { std::ptr::read_volatile(&(*self.registers).cap) };
+        let bytes = raw_value.to_be_bytes();
+        let ((_, remaining), caps) = NvmeCapabilities::from_bytes((&bytes, 0))?;
+        dbg![&caps];
+        if remaining > 0 {
+            bail!{"failed to consume all data"};
+        }
+        Ok(caps)
     }
 
-    pub(crate) fn cap_cmbs(&self) -> bool {
-        ((self.read_cap() >> 57) & 0b1) != 0
-    }
+    pub(crate) fn print_caps_table(&self) -> Result<()> {
+        let caps = self.get_capabilities()?;
 
-    pub(crate) fn cap_pmbs(&self) -> bool {
-        ((self.read_cap() >> 56) & 0b1) != 0
-    }
-
-    pub(crate) fn cap_mpsmax(&self) -> u8 {
-        ((self.read_cap() >> 52) & 0b1111) as u8
-    }
-
-    pub(crate) fn cap_mpsmin(&self) -> u8 {
-        ((self.read_cap() >> 48) & 0b1111) as u8
-    }
-
-    fn cap_reserved_47_46(&self) -> u8 {
-        ((self.read_cap() >> 46) & 0b11) as u8
-    }
-
-    pub(crate) fn cap_bps(&self) -> bool {
-        ((self.read_cap() >> 45) & 0b1) != 0
-    }
-
-    pub(crate) fn cap_css(&self) -> u8 {
-        ((self.read_cap() >> 37) & 0b1111_1111) as u8
-    }
-
-    pub(crate) fn cap_nssrs(&self) -> bool {
-        ((self.read_cap() >> 36) & 0b1) != 0
-    }
-
-    pub(crate) fn cap_dstrd(&self) -> u8 {
-        ((self.read_cap() >> 32) & 0b1111) as u8
-    }
-
-    pub(crate) fn cap_to(&self) -> u8 {
-        ((self.read_cap() >> 24) & 0b1111_1111) as u8
-    }
-
-    fn cap_reserved_23_19(&self) -> u8 {
-        ((self.read_cap() >> 19) & 0b1_1111) as u8
-    }
-
-    // TODO: Do this... differently. I dont like it
-    pub(crate) fn cap_ams(&self) -> (bool, bool) {
-        // Weighted Round Robin with Urgent Priority Class
-        let wrrups = ((self.read_cap() >> 18) & 0b1) != 0;
-
-        // TODO: do i have anything that sets this bit?
-        // Vendor specific bit likely meant to enable a vendor specific arbitration mechanism
-        let vendor = ((self.read_cap() >> 17) & 0b1) != 0;
-
-        (wrrups, vendor)
-    }
-
-    pub(crate) fn cap_cqr(&self) -> bool {
-        ((self.read_cap() >> 16) & 0b1) != 0
-    }
-
-    pub(crate) fn cap_mqes(&self) -> u16 {
-        ((self.read_cap() >> 0) & 0b1111_1111_1111_1111) as u16
-    }
-
-    pub(crate) fn print_caps_table(&self) {
         println!("+-----------------------------------------------------+");
         println!("| NVMe Capabilities                                   |");
         println!("+--------+-------+------------------------------------+");
         println!("| Name   | Value | Description                        |");
         println!("+--------+-------+------------------------------------+");
 
-        print_table_row("CMBS", self.cap_cmbs(), "Controller Memory Buffer Supported");
-        print_table_row("PMBS", self.cap_pmbs(), "Persistent Memory Region Supported");
-        print_table_row("MPSMAX", self.cap_mpsmax(), "Memory Page Size Maximum");
-        print_table_row("MPSMIN", self.cap_mpsmin(), "Memory Page Size Minimum");
-        print_table_row("BPS", self.cap_bps(), "Boot Partition Support");
+        print_table_row("CMBS", caps.cmbs, "Controller Memory Buffer Supported");
+        print_table_row("PMRS", caps.pmrs, "Persistent Memory Region Supported");
+        print_table_row("MPSMAX", caps.mpsmax, "Memory Page Size Maximum");
+        print_table_row("MPSMIN", caps.mpsmin, "Memory Page Size Minimum");
+        print_table_row("BPS", caps.bps, "Boot Partition Support");
 
         // TODO: CSS
-        // print_table_row("CSS", self.cap_css(), "Command Sets Supported");
-        print_table_row("NSSRS", self.cap_nssrs(), "NVM Subsystem Reset Supported");
-        print_table_row("DSTRD", self.cap_dstrd(), "Doorbell Stride");
-        print_table_row("TO", self.cap_to(), "Timeout (500ms units)");
+        // print_table_row("CSS", caps.css, "Command Sets Supported");
+        print_table_row("NSSRS", caps.nssrs, "NVM Subsystem Reset Supported");
+        print_table_row("DSTRD", caps.dstrd, "Doorbell Stride");
+        print_table_row("TO", caps.to, "Timeout (500ms units)");
 
         // TODO: print small bit table somehow?
-        //let (ams_wrrups, ams_vendor) = self.cap_ams();
+        //let (ams_wrrups, ams_vendor) = caps.ams();
         //print_table_row(
         //    "AMS (WRRUP)",
         //    if ams_wrrups { "Y" } else { "N" },
@@ -101,9 +111,11 @@ impl NvmeController {
         //    "Vendor Specific",
         //);
 
-        print_table_row("CQR", self.cap_cqr(), "Contiguous Queues Required");
-        print_table_row("MQES", self.cap_mqes(), "Maximum Queue Entries Supported");
+        print_table_row("CQR", caps.cqr, "Contiguous Queues Required");
+        print_table_row("MQES", caps.mqes, "Maximum Queue Entries Supported");
         println!("+--------+-------+------------------------------------+");
+
+        Ok(())
     }
 }
 
