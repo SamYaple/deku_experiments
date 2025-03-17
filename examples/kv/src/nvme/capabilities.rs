@@ -67,10 +67,9 @@ pub(crate) struct NvmeCapabilities {
 
 impl NvmeController {
     pub(crate) fn get_capabilities(&self) -> Result<NvmeCapabilities> {
-        let raw_value = unsafe { std::ptr::read_volatile(&(*self.registers).cap) };
-        let bytes = raw_value.to_be_bytes();
+        let val = unsafe { std::ptr::read_volatile(&self.registers.as_ref().cap) };
+        let bytes = val.to_be_bytes();
         let ((_, remaining), caps) = NvmeCapabilities::from_bytes((&bytes, 0))?;
-        dbg![&caps];
         if remaining > 0 {
             bail!{"failed to consume all data"};
         }

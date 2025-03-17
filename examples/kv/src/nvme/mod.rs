@@ -1,12 +1,15 @@
+pub(crate) mod controller;
+mod command;
+pub(crate) use command::{Command, Completion};
 mod capabilities;
 mod version;
-mod admin;
 use anyhow::{bail, Result};
 use std::io;
 use std::ptr;
 use std::os::fd::AsRawFd;
 use std::fs::File;
 use std::sync::Arc;
+use std::ptr::NonNull;
 
 #[repr(C)]
 struct NvmeRegisters {
@@ -25,10 +28,17 @@ struct NvmeRegisters {
     cmbsz:  u32,
 }
 
+type NvmeCommand = [u8; Command::SIZE];
+type NvmeCompletion = [u8; Completion::SIZE];
+
 pub(crate) struct NvmeController {
     // this is the file handle for the pcie device (through vfio)
     device: Arc<File>,
-    registers: *mut NvmeRegisters,
+    registers: NonNull<NvmeRegisters>,
+    admin_submission_queue: NonNull<NvmeCommand>,
+    admin_completion_queue: NonNull<NvmeCompletion>,
+    admin_submission_queue_tail: u16,
+    admin_completion_queue_head: u16,
 }
 
 impl NvmeController {
@@ -37,7 +47,7 @@ impl NvmeController {
         let device_fd = device.as_raw_fd();
         let mapped_ptr = unsafe {
             libc::mmap(
-                ptr::null_mut(),
+                std::ptr::null_mut(),
                 region_size as usize,
                 libc::PROT_READ | libc::PROT_WRITE,
                 libc::MAP_SHARED,
@@ -48,56 +58,39 @@ impl NvmeController {
         if mapped_ptr == libc::MAP_FAILED {
             bail! {io::Error::last_os_error()};
         }
-
         let registers = mapped_ptr as *mut NvmeRegisters;
+
+        // setup admin queues for dma command transfer/response
+        let asq_size = 32;
+        let acq_size = 16;
+        let asq_ptr = unsafe { crate::dma::alloc_aligned_4k_dma_buffer::<NvmeCommand>(asq_size * std::mem::size_of::<NvmeCommand>())? };
+        let acq_ptr = unsafe { crate::dma::alloc_aligned_4k_dma_buffer::<NvmeCompletion>(acq_size * std::mem::size_of::<NvmeCompletion>())? };
+
+        // // TODO: (SUBMISSION_QUEUE_DEPTH << 16) | COMPLETION_QUEUE_DEPTH
+        // //       seems to work like a netmask, 0s then 1s for valid values
+        // let aqa = 0b0000_0000_0011_1111_0000_0000_0011_1111 as u32;
+        let aqa = ((asq_size as u32 - 1) << 16) | (acq_size as u32 - 1);
+        let asq = unsafe { asq_ptr } as u64;
+        let acq = unsafe { acq_ptr } as u64;
+
+        unsafe {
+            std::ptr::write_volatile(&mut (*registers).aqa, aqa);
+            std::ptr::write_volatile(&mut (*registers).asq, asq);
+            std::ptr::write_volatile(&mut (*registers).acq, acq);
+        }
+
+        let registers = NonNull::new(registers).expect("the registers pointer is null");
+        let admin_submission_queue = NonNull::new(asq_ptr).expect("the pointer is still null");
+        let admin_completion_queue = NonNull::new(acq_ptr).expect("the pointer is still null");
+
         Ok(Self {
             device,
             registers,
+            admin_submission_queue,
+            admin_completion_queue,
+            admin_submission_queue_tail: 0,
+            admin_completion_queue_head: 0,
         })
     }
-}
 
-
-use std::thread::sleep;
-use std::time::Duration;
-
-// Controller Configuration (CC) Register Bit Fields
-const NVME_CC_EN: u32 = 1 << 0;   // Enable bit
-const NVME_CC_IOCQES: u32 = 4 << 20; // Completion Queue Entry Size (4 = 16 bytes)
-const NVME_CC_IOSQES: u32 = 6 << 16; // Submission Queue Entry Size (6 = 64 bytes)
-
-// Controller Status (CSTS) Register Bit Fields
-const NVME_CSTS_RDY: u32 = 1 << 0; // Controller Ready bit
-
-
-impl NvmeController {
-    /// Enables the NVMe controller
-    pub fn enable_controller(&self) -> Result<()> {
-        // Ensure the controller is not already enabled
-        let current_cc = unsafe { std::ptr::read_volatile(&(*self.registers).cc) };
-        if (current_cc & NVME_CC_EN) != 0 {
-            bail!("Controller is already enabled");
-        }
-
-        // Program the CC register
-        let cc_value = NVME_CC_EN | NVME_CC_IOCQES | NVME_CC_IOSQES;
-        unsafe {
-            std::ptr::write_volatile(&mut (*self.registers).cc, cc_value);
-        }
-        println!("Controller Enable Command Issued");
-
-        // Poll CSTS register until the Ready bit (RDY) is set
-        let mut timeout = 100; // Timeout counter
-        while timeout > 0 {
-            let csts = unsafe { std::ptr::read_volatile(&(*self.registers).csts) };
-            if (csts & NVME_CSTS_RDY) != 0 {
-                println!("NVMe Controller is Ready");
-                return Ok(());
-            }
-            sleep(Duration::from_millis(10)); // Short delay before retry
-            timeout -= 1;
-        }
-
-        bail!("Timeout waiting for NVMe controller to become ready");
-    }
 }

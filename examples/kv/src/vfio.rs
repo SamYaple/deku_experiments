@@ -11,16 +11,16 @@ const VFIO_API_VERSION_EXPECTED: u32 = 0;
 const VFIO_GROUP_FLAGS_VIABLE: u32 = 1;
 const VFIO_IOMMU_TYPE1V2: u32 = 3;
 
-const VFIO_TYPE: u32 = b';' as u32;
+const VFIO_TYPE: u32 = 0b0011_1011_0000_0000;
 const VFIO_BASE: u32 = 100;
 
-const VFIO_GET_API_VERSION_IOCTL:  u64 = ((VFIO_TYPE << 8) | (VFIO_BASE + 0)) as u64;
-const VFIO_CHECK_EXTENSION_IOCTL:  u64 = ((VFIO_TYPE << 8) | (VFIO_BASE + 1)) as u64;
-const VFIO_SET_IOMMU_IOCTL:        u64 = ((VFIO_TYPE << 8) | (VFIO_BASE + 2)) as u64;
-const VFIO_GROUP_GET_STATUS:       u64 = ((VFIO_TYPE << 8) | (VFIO_BASE + 3)) as u64;
-const VFIO_GROUP_SET_CONTAINER:    u64 = ((VFIO_TYPE << 8) | (VFIO_BASE + 4)) as u64;
-const VFIO_GROUP_GET_DEVICE_FD:    u64 = ((VFIO_TYPE << 8) | (VFIO_BASE + 6)) as u64;
-const VFIO_DEVICE_GET_REGION_INFO: u64 = ((VFIO_TYPE << 8) | (VFIO_BASE + 8)) as u64;
+const VFIO_GET_API_VERSION_IOCTL:  u64 = (VFIO_TYPE | (VFIO_BASE + 0)) as u64;
+const VFIO_CHECK_EXTENSION_IOCTL:  u64 = (VFIO_TYPE | (VFIO_BASE + 1)) as u64;
+const VFIO_SET_IOMMU_IOCTL:        u64 = (VFIO_TYPE | (VFIO_BASE + 2)) as u64;
+const VFIO_GROUP_GET_STATUS:       u64 = (VFIO_TYPE | (VFIO_BASE + 3)) as u64;
+const VFIO_GROUP_SET_CONTAINER:    u64 = (VFIO_TYPE | (VFIO_BASE + 4)) as u64;
+const VFIO_GROUP_GET_DEVICE_FD:    u64 = (VFIO_TYPE | (VFIO_BASE + 6)) as u64;
+const VFIO_DEVICE_GET_REGION_INFO: u64 = (VFIO_TYPE | (VFIO_BASE + 8)) as u64;
 
 // structs
 #[repr(C)]

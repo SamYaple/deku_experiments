@@ -1,17 +1,12 @@
 use anyhow::{bail, Result};
 use deku::prelude::*;
-use super::NvmeController;
+use super::{NvmeRegisters, NvmeController};
 
 #[derive(Debug, DekuRead)]
 #[deku(endian = "big")]
 pub(crate) struct NvmeSpecVersion {
-    #[deku(bits = 16)]
     mjr: u16,
-
-    #[deku(bits = 8)]
     mnr: u8,
-
-    #[deku(bits = 8)]
     ter: u8,
 }
 
@@ -28,7 +23,7 @@ impl NvmeSpecVersion {
 
 impl NvmeController {
     pub(crate) fn get_spec_version(&self) -> Result<NvmeSpecVersion> {
-        let val = unsafe { std::ptr::read_volatile(&(*self.registers).vs) };
+        let val = unsafe { std::ptr::read_volatile(&self.registers.as_ref().vs) };
         NvmeSpecVersion::from_raw(val)
     }
 
