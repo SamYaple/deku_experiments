@@ -7,3 +7,4 @@ edition = "2021"
 anyhow = "1.0.97"
 deku = "0.18.1"
 libc = "0.2.171"
+vfio = { version = "0.1.0", path = "../../projects/vfio" }

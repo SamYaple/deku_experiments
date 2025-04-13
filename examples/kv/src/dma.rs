@@ -1,6 +1,6 @@
 use anyhow::{bail, Result};
-use libc::posix_memalign;
 use core::marker::PhantomData;
+use libc::posix_memalign;
 use std::ptr::NonNull;
 
 pub struct DmaQueue<T> {
@@ -35,7 +35,7 @@ impl<T> DmaQueue<T> {
 
     pub unsafe fn push(&mut self, value: T) -> Result<(), u64> {
         if self.is_full() {
-            todo!{"queue is full and we aren't going to see our tail update"};
+            todo! {"queue is full and we aren't going to see our tail update"};
         }
         std::ptr::write_volatile(self.buffer.as_ptr().add(self.head), value);
         self.head = (self.head + 1) % self.capacity;

@@ -1,7 +1,4 @@
 use deku::prelude::*;
-use anyhow::{bail, Result};
-use super::NvmeController;
-
 
 #[derive(Debug, DekuRead, DekuWrite)]
 #[deku(id_type = "u8")]
@@ -47,16 +44,10 @@ struct CommandDword0 {
 #[deku(endian = "big", id_type = "u128")]
 enum DataPointer {
     //TODO PRETTY SURE THESE IDS ARE WRONG
-
     #[deku(id = 0)]
-    PRP {
-        prp2: u64,
-        prp1: u64,
-    },
+    PRP { prp2: u64, prp1: u64 },
     #[deku(id = 1)]
-    SGL {
-        sgl1: u128,
-    },
+    SGL { sgl1: u128 },
 }
 
 #[derive(Debug, DekuWrite, DekuRead)]
@@ -75,10 +66,10 @@ pub(crate) struct Command {
     cdw10: u32, // NDT with "vendor specific"
     dptr: DataPointer, // broken because i dont know deku enough to reference cdw0 below
     #[deku(endian = "big")]
-    mptr:  u64,
+    mptr: u64,
     _reserved_15_08: u8,
     #[deku(endian = "big")]
-    nsid:  u32,
+    nsid: u32,
     cdw0: CommandDword0,
 }
 
@@ -124,7 +115,6 @@ pub(crate) struct Completion {
     dw2: CompletionQueueEntryDW2,
     dw3: CompletionQueueEntryDW3,
 }
-
 
 impl Completion {
     pub const SIZE: usize = 16;

@@ -1,6 +1,6 @@
+use super::NvmeController;
 use anyhow::{bail, Result};
 use deku::prelude::*;
-use super::NvmeController;
 use std::thread::sleep;
 use std::time::Duration;
 
@@ -95,7 +95,7 @@ impl ControllerConfiguration {
         let bytes = val.to_be_bytes();
         let ((_, remaining), version) = Self::from_bytes((&bytes, 0))?;
         if remaining > 0 {
-            bail!{"failed to consume all data"};
+            bail! {"failed to consume all data"};
         }
         Ok(version)
     }
@@ -114,7 +114,7 @@ impl ControllerStatus {
         let bytes = val.to_be_bytes();
         let ((_, remaining), version) = Self::from_bytes((&bytes, 0))?;
         if remaining > 0 {
-            bail!{"failed to consume all dataation"};
+            bail! {"failed to consume all dataation"};
         }
         Ok(version)
     }
@@ -128,7 +128,7 @@ impl Into<u32> for ControllerStatus {
     }
 }
 
-impl NvmeController {
+impl NvmeController<'_> {
     pub(crate) fn get_controller_configuration(&self) -> Result<ControllerConfiguration> {
         let val = unsafe { std::ptr::read_volatile(&self.registers.as_ref().cc) };
         ControllerConfiguration::from_raw(val)
@@ -139,9 +139,14 @@ impl NvmeController {
         ControllerStatus::from_raw(val)
     }
 
-    pub(crate) fn write_controller_configuration(&mut self, cc: ControllerConfiguration) -> Result<()> {
+    pub(crate) fn write_controller_configuration(
+        &mut self,
+        cc: ControllerConfiguration,
+    ) -> Result<()> {
         let val: u32 = cc.into();
-        unsafe { std::ptr::write_volatile(&mut self.registers.as_mut().cc, val); };
+        unsafe {
+            std::ptr::write_volatile(&mut self.registers.as_mut().cc, val);
+        };
         Ok(())
     }
 
@@ -166,36 +171,38 @@ impl NvmeController {
         // TODO use reported timeout from device
         let mut timeout = 100;
         while timeout > 0 {
-            if self.ready()? { return Ok(()); }
+            if self.ready()? {
+                return Ok(());
+            }
             sleep(Duration::from_millis(10));
             timeout -= 1;
         }
-        bail!{"Timeout waiting for NVMe controller to become ready"};
+        bail! {"Timeout waiting for NVMe controller to become ready"};
     }
 
     pub fn wait_for_controller_stop(&self) -> Result<()> {
         // TODO use reported timeout from device
         let mut timeout = 100;
         while timeout > 0 {
-            if !self.ready()? { return Ok(()); }
+            if !self.ready()? {
+                return Ok(());
+            }
             sleep(Duration::from_millis(10));
             timeout -= 1;
         }
-        bail!{"Timeout waiting for NVMe controller to stop"};
+        bail! {"Timeout waiting for NVMe controller to stop"};
     }
     pub fn wait_for_controller_shutdown(&self) -> Result<()> {
         let mut timeout = 100;
         while timeout > 0 {
             let status = self.get_controller_status()?;
             if status.shst == ShutdownStatus::ShutdownComplete {
-                dbg!(status.shst);
                 return Ok(());
             }
-            dbg!(status.shst);
             std::thread::sleep(std::time::Duration::from_millis(10));
             timeout -= 1;
         }
-        bail!{"Timeout waiting for NVMe controller to shutdown"};
+        bail! {"Timeout waiting for NVMe controller to shutdown"};
     }
 
     pub fn shutdown_controller(&mut self) -> Result<()> {

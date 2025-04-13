@@ -1,17 +1,15 @@
-mod nvme;
 mod dma;
-mod vfio;
+mod nvme;
 use anyhow::Result;
 use nvme::NvmeController;
-use vfio::VfioContainer;
+use vfio::{VfioContainer, PciAddress};
 
 fn main() -> Result<()> {
-    //dbg![std::mem::size_of::<crate::nvme::Command>()];
-    //panic!();
+    let mut container = VfioContainer::new()?;
+    let group = container.add_group(42)?;
+    let device = group.add_device(PciAddress::new("02:00.0")?)?;
 
-    let vfio_container = VfioContainer::new()?;
-    let (device, region_info) = vfio_container.open_device("/dev/vfio/42", "0000:02:00.0")?;
-    let mut controller = NvmeController::new(device, region_info.size, region_info.offset)?;
+    let mut controller = NvmeController::new(device)?;
     controller.print_spec_version()?;
     controller.print_caps_table()?;
 

@@ -1,6 +1,6 @@
-use anyhow::{Result, bail};
-use deku::prelude::*;
 use super::NvmeController;
+use anyhow::{bail, Result};
+use deku::prelude::*;
 
 #[derive(Debug, DekuRead)]
 #[deku(endian = "big")]
@@ -65,13 +65,13 @@ pub(crate) struct NvmeCapabilities {
     mqes: u16,
 }
 
-impl NvmeController {
+impl NvmeController<'_> {
     pub(crate) fn get_capabilities(&self) -> Result<NvmeCapabilities> {
         let val = unsafe { std::ptr::read_volatile(&self.registers.as_ref().cap) };
         let bytes = val.to_be_bytes();
         let ((_, remaining), caps) = NvmeCapabilities::from_bytes((&bytes, 0))?;
         if remaining > 0 {
-            bail!{"failed to consume all data"};
+            bail! {"failed to consume all data"};
         }
         Ok(caps)
     }
@@ -120,5 +120,10 @@ impl NvmeController {
 
 fn print_table_row<T: ToString>(name: &str, value: T, description: &str) {
     // {:<6} is left aligned with at least 6 chars. Shorter values are padded
-    println!("| {:<6} | {:>5} | {:<34} |", name, value.to_string(), description);
+    println!(
+        "| {:<6} | {:>5} | {:<34} |",
+        name,
+        value.to_string(),
+        description
+    );
 }

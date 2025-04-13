@@ -1,7 +1,7 @@
 [package]
-name = "dump_info"
+name = "dekutest"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-anyhow = "1.0.97"
+deku = "0.18.1"

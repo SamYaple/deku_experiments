@@ -1,5 +1,6 @@
 [workspace]
 resolver = "2"
-members = [ "examples/dump_info",
+members = [
     "examples/kv",
+    "projects/vfio",
 ]

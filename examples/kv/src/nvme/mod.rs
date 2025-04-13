@@ -1,39 +1,37 @@
-pub(crate) mod controller;
 mod command;
+pub(crate) mod controller;
 pub(crate) use command::{Command, Completion};
 mod capabilities;
 mod version;
 use anyhow::{bail, Result};
 use std::io;
-use std::ptr;
 use std::os::fd::AsRawFd;
-use std::fs::File;
-use std::sync::Arc;
 use std::ptr::NonNull;
+use vfio::VfioDevice;
 
 #[repr(C)]
 struct NvmeRegisters {
-    cap:    u64,
-    vs:     u32,
-    intms:  u32,
-    intmc:  u32,
-    cc:     u32,
-    rsvd:   u32,
-    csts:   u32,
-    nssr:   u32,
-    aqa:    u32,
-    asq:    u64,
-    acq:    u64,
+    cap: u64,
+    vs: u32,
+    intms: u32,
+    intmc: u32,
+    cc: u32,
+    rsvd: u32,
+    csts: u32,
+    nssr: u32,
+    aqa: u32,
+    asq: u64,
+    acq: u64,
     cmbloc: u32,
-    cmbsz:  u32,
+    cmbsz: u32,
 }
 
 type NvmeCommand = [u8; Command::SIZE];
 type NvmeCompletion = [u8; Completion::SIZE];
 
-pub(crate) struct NvmeController {
+pub(crate) struct NvmeController<'dev> {
     // this is the file handle for the pcie device (through vfio)
-    device: Arc<File>,
+    device: &'dev VfioDevice,
     registers: NonNull<NvmeRegisters>,
     admin_submission_queue: NonNull<NvmeCommand>,
     admin_completion_queue: NonNull<NvmeCompletion>,
@@ -41,18 +39,18 @@ pub(crate) struct NvmeController {
     admin_completion_queue_head: u16,
 }
 
-impl NvmeController {
-    pub(crate) fn new(device: File, region_size: u64, region_offset: u64) -> Result<Self> {
-        let device = Arc::new(device);
+impl<'dev> NvmeController<'dev> {
+    pub(crate) fn new(device: &'dev VfioDevice) -> Result<Self> {
+        let region_info = device.get_region_info()?;
         let device_fd = device.as_raw_fd();
         let mapped_ptr = unsafe {
             libc::mmap(
                 std::ptr::null_mut(),
-                region_size as usize,
+                region_info.get_size(),
                 libc::PROT_READ | libc::PROT_WRITE,
                 libc::MAP_SHARED,
                 device_fd,
-                region_offset as libc::off_t,
+                region_info.get_offset() as libc::off_t,
             )
         };
         if mapped_ptr == libc::MAP_FAILED {
@@ -63,8 +61,16 @@ impl NvmeController {
         // setup admin queues for dma command transfer/response
         let asq_size = 32;
         let acq_size = 16;
-        let asq_ptr = unsafe { crate::dma::alloc_aligned_4k_dma_buffer::<NvmeCommand>(asq_size * std::mem::size_of::<NvmeCommand>())? };
-        let acq_ptr = unsafe { crate::dma::alloc_aligned_4k_dma_buffer::<NvmeCompletion>(acq_size * std::mem::size_of::<NvmeCompletion>())? };
+        let asq_ptr = unsafe {
+            crate::dma::alloc_aligned_4k_dma_buffer::<NvmeCommand>(
+                asq_size * std::mem::size_of::<NvmeCommand>(),
+            )?
+        };
+        let acq_ptr = unsafe {
+            crate::dma::alloc_aligned_4k_dma_buffer::<NvmeCompletion>(
+                acq_size * std::mem::size_of::<NvmeCompletion>(),
+            )?
+        };
 
         // // TODO: (SUBMISSION_QUEUE_DEPTH << 16) | COMPLETION_QUEUE_DEPTH
         // //       seems to work like a netmask, 0s then 1s for valid values
@@ -92,5 +98,4 @@ impl NvmeController {
             admin_completion_queue_head: 0,
         })
     }
-
 }
