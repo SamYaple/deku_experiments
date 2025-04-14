@@ -32,10 +32,28 @@ impl VfioGroup {
         self.id
     }
 
-    pub fn add_device(&mut self, address: PciAddress) -> Result<&VfioDevice> {
+    pub fn get_id_from_address(address: &PciAddress) -> Result<u32> {
+        let symlink_path = format!("/sys/bus/pci/devices/{}/iommu_group", address);
+        let resolved_path = std::fs::read_link(symlink_path)?;
+        // TODO: I dont like the unwraps here, but under Linux this should always be a file
+        //       and it should always be a u32 value (in string form)
+        let id = resolved_path.file_name().unwrap().to_str().unwrap();
+        Ok(id.parse::<u32>()?)
+    }
+
+    pub fn add_device(&mut self, address: &PciAddress) -> Result<()> {
         let device = VfioDevice::new(self, address)?;
         self.devices.push(device);
-        Ok(self.devices.last().unwrap())
+        Ok(())
+    }
+
+    pub fn get_device(&mut self, address: &PciAddress) -> Result<&mut VfioDevice> {
+        for dev in &mut self.devices {
+            if dev.get_address() == address {
+                return Ok(dev);
+            }
+        }
+        bail! {format!{"No pci device with address {} found in VfioGroup. Did you forget to group.add_device()?", address}}
     }
 
     fn init(&self, container: &VfioContainer) -> Result<()> {
@@ -65,6 +83,10 @@ impl VfioGroup {
         }
 
         Ok(())
+    }
+
+    pub fn get_status(&self) -> Result<VfioGroupStatus> {
+        VfioGroupStatus::new(self)
     }
 }
 

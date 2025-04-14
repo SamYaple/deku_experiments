@@ -23,4 +23,5 @@ const VFIO_SET_IOMMU_IOCTL:        u64 = (VFIO_TYPE | 102) as u64;
 const VFIO_GROUP_GET_STATUS:       u64 = (VFIO_TYPE | 103) as u64;
 const VFIO_GROUP_SET_CONTAINER:    u64 = (VFIO_TYPE | 104) as u64;
 const VFIO_GROUP_GET_DEVICE_FD:    u64 = (VFIO_TYPE | 106) as u64;
+const VFIO_DEVICE_GET_INFO:        u64 = (VFIO_TYPE | 107) as u64;
 const VFIO_DEVICE_GET_REGION_INFO: u64 = (VFIO_TYPE | 108) as u64;

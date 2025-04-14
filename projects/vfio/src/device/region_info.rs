@@ -27,9 +27,10 @@ impl VfioRegionInfo {
         }
     }
 
-    pub fn new(device: &VfioDevice) -> Result<Self> {
+    pub fn new(device: &VfioDevice, index: u8) -> Result<Self> {
         let device_fd = device.as_raw_fd();
-        let default_status = Self::default();
+        let mut default_status = Self::default();
+        default_status.index = index as u32;
         let mut bytes = default_status.to_bytes()?;
         let ret = unsafe { libc::ioctl(device_fd, crate::VFIO_DEVICE_GET_REGION_INFO, bytes.as_mut_ptr()) };
         if ret < 0 {
@@ -53,8 +54,8 @@ impl VfioRegionInfo {
         self.size as usize
     }
 
-    pub fn get_offset(&self) -> usize {
-        self.offset as usize
+    pub fn get_offset(&self) -> u64 {
+        self.offset
     }
 }
 

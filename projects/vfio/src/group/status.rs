@@ -38,8 +38,17 @@ impl VfioGroupStatus {
             VfioGroupStatusFlag::Viable       => self.flags.viable,
         }
     }
+
+    pub fn get_flags(&self) -> Vec<VfioGroupStatusFlag> {
+        let mut flags = Vec::new();
+        if self.flags.container_set { flags.push(VfioGroupStatusFlag::ContainerSet); }
+        if self.flags.viable { flags.push(VfioGroupStatusFlag::Viable); }
+        flags
+    }
 }
 
+
+#[derive(Debug)]
 pub enum VfioGroupStatusFlag {
     ContainerSet,
     Viable,

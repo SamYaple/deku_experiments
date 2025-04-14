@@ -41,7 +41,7 @@ pub(crate) struct NvmeController<'dev> {
 
 impl<'dev> NvmeController<'dev> {
     pub(crate) fn new(device: &'dev VfioDevice) -> Result<Self> {
-        let region_info = device.get_region_info()?;
+        let region_info = device.get_region_info(0)?;
         let device_fd = device.as_raw_fd();
         let mapped_ptr = unsafe {
             libc::mmap(

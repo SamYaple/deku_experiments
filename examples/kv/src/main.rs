@@ -2,12 +2,25 @@ mod dma;
 mod nvme;
 use anyhow::Result;
 use nvme::NvmeController;
-use vfio::{VfioContainer, PciAddress};
+use vfio::{VfioContainer, VfioGroup, PciAddress};
 
 fn main() -> Result<()> {
+    let pci_address = &PciAddress::new("02:00.0")?;
+    let group_id = VfioGroup::get_id_from_address(pci_address)?;
+
     let mut container = VfioContainer::new()?;
-    let group = container.add_group(42)?;
-    let device = group.add_device(PciAddress::new("02:00.0")?)?;
+    let group = container.add_group(group_id)?;
+    group.add_device(pci_address)?;
+
+    //let group_status = group.get_status()?;
+    //dbg![group_status.get_flags()];
+
+    let device = group.get_device(pci_address)?;
+    let pci_device = vfio::utils::PciDevice::new(device)?;
+    dbg![&pci_device];
+
+    //let device_info = device.get_device_info()?;
+    //dbg![device_info.get_flags()];
 
     let mut controller = NvmeController::new(device)?;
     controller.print_spec_version()?;
@@ -28,6 +41,8 @@ fn main() -> Result<()> {
     controller.wait_for_controller_stop()?;
     println!("Successful!");
 
+    println!("Sleeping for 30 seconds (it is safe to ctrl-c)....");
+    std::thread::sleep(std::time::Duration::from_secs(30));
     println!("thats all folks");
     Ok(())
 }
