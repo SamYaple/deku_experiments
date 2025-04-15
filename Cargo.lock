@@ -152,6 +152,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "pci"
+version = "0.1.0"
+dependencies = [
+ "deku",
+]
+
+[[package]]
 name = "proc-macro-crate"
 version = "3.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -243,6 +250,7 @@ dependencies = [
  "anyhow",
  "deku",
  "libc",
+ "pci",
 ]
 
 [[package]]

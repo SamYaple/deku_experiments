@@ -7,3 +7,4 @@ edition = "2021"
 anyhow = "1"
 deku = "0.18"
 libc = "0.2"
+pci = { version = "0.1.0", path = "../pci" }
