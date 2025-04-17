@@ -1,5 +1,4 @@
 mod dma;
-mod nvme;
 use anyhow::Result;
 use nvme::NvmeController;
 use vfio::{VfioContainer, VfioGroup, PciAddress};

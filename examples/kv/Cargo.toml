@@ -4,7 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-anyhow = "1.0.97"
-deku = "0.18.1"
-libc = "0.2.171"
+anyhow = "1"
+deku = "0.18"
+libc = "0.2"
+nvme = { version = "0.1.0", path = "../../projects/nvme" }
 vfio = { version = "0.1.0", path = "../../projects/vfio" }

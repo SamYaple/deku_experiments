@@ -1,6 +1,9 @@
 [workspace]
 resolver = "2"
 members = [
-    "examples/kv", "projects/pci",
+    "codegen/pci-ids-parser",
+    "examples/kv",
+    "projects/nvme",
+    "projects/pci",
     "projects/vfio",
 ]

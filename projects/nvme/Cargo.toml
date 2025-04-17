@@ -1,0 +1,10 @@
+[package]
+name = "nvme"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1"
+deku = "0.18"
+libc = "0.2"
+vfio = { version = "0.1.0", path = "../vfio" }

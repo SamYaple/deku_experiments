@@ -4,7 +4,7 @@ use deku::prelude::*;
 
 #[derive(Debug, DekuRead)]
 #[deku(endian = "big")]
-pub(crate) struct NvmeCapabilities {
+pub struct NvmeCapabilities {
     #[deku(bits = 6)]
     _reserved_63_58: u8,
 
@@ -76,7 +76,7 @@ impl NvmeController<'_> {
         Ok(caps)
     }
 
-    pub(crate) fn print_caps_table(&self) -> Result<()> {
+    pub fn print_caps_table(&self) -> Result<()> {
         let caps = self.get_capabilities()?;
 
         println!("+-----------------------------------------------------+");

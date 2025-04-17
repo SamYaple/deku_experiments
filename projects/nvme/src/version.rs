@@ -27,7 +27,7 @@ impl NvmeController<'_> {
         NvmeSpecVersion::from_raw(val)
     }
 
-    pub(crate) fn print_spec_version(&self) -> Result<()> {
+    pub fn print_spec_version(&self) -> Result<()> {
         let ver = self.get_spec_version()?;
         println!("NVMe spec version: {}.{}.{}", ver.mjr, ver.mnr, ver.ter);
         Ok(())
