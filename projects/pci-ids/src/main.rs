@@ -67,6 +67,9 @@ fn main() -> Result<()> {
         .open("/usr/share/hwdata/pci.ids")?;
     let mmap_file = unsafe { Mmap::map(&file)? };
     let input = std::str::from_utf8(&mmap_file)?;
+    // It was absolutely not neccesary to mmap this file. We could have read it into a String.
+    // This seemed more fun though...
+
     let (input, pci_ids) = PciIds::parse(input).unwrap();
     assert_eq!(input, "");
     let ret = pci_ids.search("10f0");
