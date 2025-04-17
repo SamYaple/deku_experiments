@@ -1,5 +1,7 @@
 mod parser;
 use anyhow::Result;
+use memmap2::Mmap;
+use std::fs::OpenOptions;
 
 #[derive(Debug, PartialEq)]
 pub struct PciIds<'a> {
@@ -49,11 +51,10 @@ pub struct Subsystem<'a> {
 }
 
 fn main() -> Result<()> {
-    let file = std::fs::OpenOptions::new()
+    let file = OpenOptions::new()
         .read(true)
-        //.open("/usr/share/hwdata/pci.ids")?;
-        .open("/tmp/pci.ids")?;
-    let mmap_file = unsafe { memmap2::Mmap::map(&file)? };
+        .open("/usr/share/hwdata/pci.ids")?;
+    let mmap_file = unsafe { Mmap::map(&file)? };
     let input = std::str::from_utf8(&mmap_file)?;
     let (input, pci_ids) = PciIds::parse(input).unwrap();
     assert_eq!(input, "");

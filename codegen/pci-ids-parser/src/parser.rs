@@ -1,4 +1,5 @@
 use crate::{Class, Device, PciIds, ProgIf, SubClass, Subsystem, Vendor};
+use nom::branch::alt;
 use nom::bytes::complete::{tag, take_while_m_n};
 use nom::character::complete::{line_ending, not_line_ending, space1};
 use nom::combinator::opt;
@@ -20,6 +21,7 @@ impl<'a> PciIds<'a> {
 
 impl<'a> Class<'a> {
     pub fn parse(input: &'a str) -> IResult<&'a str, Self, Error<&'a str>> {
+        let (input, _) = scrub_input.parse(input)?;
         Self::parser().parse(input)
     }
 
@@ -42,6 +44,7 @@ impl<'a> Class<'a> {
 
 impl<'a> SubClass<'a> {
     pub fn parse(input: &'a str) -> IResult<&'a str, Self, Error<&'a str>> {
+        let (input, _) = scrub_input.parse(input)?;
         Self::parser().parse(input)
     }
 
@@ -60,6 +63,7 @@ impl<'a> SubClass<'a> {
 
 impl<'a> ProgIf<'a> {
     pub fn parse(input: &'a str) -> IResult<&'a str, Self, Error<&'a str>> {
+        let (input, _) = scrub_input.parse(input)?;
         Self::parser().parse(input)
     }
 
@@ -74,6 +78,7 @@ impl<'a> ProgIf<'a> {
 
 impl<'a> Vendor<'a> {
     pub fn parse(input: &'a str) -> IResult<&'a str, Self, Error<&'a str>> {
+        let (input, _) = scrub_input.parse(input)?;
         Self::parser().parse(input)
     }
 
@@ -89,6 +94,7 @@ impl<'a> Vendor<'a> {
 
 impl<'a> Device<'a> {
     pub fn parse(input: &'a str) -> IResult<&'a str, Self, Error<&'a str>> {
+        let (input, _) = scrub_input.parse(input)?;
         Self::parser().parse(input)
     }
 
@@ -111,6 +117,7 @@ impl<'a> Device<'a> {
 
 impl<'a> Subsystem<'a> {
     pub fn parse(input: &'a str) -> IResult<&'a str, Self, Error<&'a str>> {
+        let (input, _) = scrub_input.parse(input)?;
         Self::parser().parse(input)
     }
 
@@ -129,6 +136,14 @@ impl<'a> Subsystem<'a> {
             name,
         })
     }
+}
+
+fn scrub_input(input: &str) -> IResult<&str, Vec<&str>> {
+    many0(alt((take_comment, line_ending))).parse(input)
+}
+
+fn take_comment(input: &str) -> IResult<&str, &str> {
+    preceded(tag("#"), take_rest_of_line).parse(input)
 }
 
 fn take_rest_of_line(input: &str) -> IResult<&str, &str> {
