@@ -1,4 +1,5 @@
 mod parser;
+mod search;
 use anyhow::Result;
 use memmap2::Mmap;
 use std::fs::OpenOptions;
@@ -50,6 +51,16 @@ pub struct Subsystem<'a> {
     name: &'a str,
 }
 
+#[derive(Debug)]
+pub enum PciEntity<'a> {
+    Class(&'a Class<'a>),
+    SubClass(&'a SubClass<'a>),
+    ProgIf(&'a ProgIf<'a>),
+    Vendor(&'a Vendor<'a>),
+    Device(&'a Device<'a>),
+    Subsystem(&'a Subsystem<'a>),
+}
+
 fn main() -> Result<()> {
     let file = OpenOptions::new()
         .read(true)
@@ -58,6 +69,7 @@ fn main() -> Result<()> {
     let input = std::str::from_utf8(&mmap_file)?;
     let (input, pci_ids) = PciIds::parse(input).unwrap();
     assert_eq!(input, "");
-    dbg![pci_ids];
+    let ret = pci_ids.search("10f0");
+    dbg![ret];
     Ok(())
 }
