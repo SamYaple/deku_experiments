@@ -1,4 +1,4 @@
-use deku::{DekuContainerRead, DekuContainerWrite, DekuRead, DekuWrite};
+use deku::{DekuRead, DekuWrite};
 #[derive(Debug, DekuRead, DekuWrite)]
 #[deku(id = "prog_if", ctx = "prog_if: u8")]
 pub enum MassStorageControllerIDEInterfaceProgIf {

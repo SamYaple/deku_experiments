@@ -47,8 +47,8 @@ pub struct Subsystem {
     pub name: String,
 }
 
-pub fn load_from_file() -> std::io::Result<PciIds> {
-    let pci_ids_file_string = std::fs::read_to_string("/usr/share/hwdata/pci.ids")?;
+pub fn load_from_file(p: &std::path::Path) -> std::io::Result<PciIds> {
+    let pci_ids_file_string = std::fs::read_to_string(p)?;
     let (input, pci_ids) = PciIds::parse(&pci_ids_file_string).unwrap();
     assert_eq!(input, "");
     Ok(pci_ids)

@@ -1,7 +1,7 @@
 mod dma;
 use anyhow::Result;
 use nvme::NvmeController;
-use vfio::{VfioContainer, VfioGroup, PciAddress};
+use vfio::{PciAddress, VfioContainer, VfioGroup};
 
 fn main() -> Result<()> {
     let pci_address = &PciAddress::new("02:00.0")?;

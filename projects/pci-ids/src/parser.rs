@@ -57,7 +57,11 @@ impl SubClass {
                 many0(ProgIf::parse),
             ),
         )
-        .map(|(id, name, prog_ifs)| Self { id, name: name.to_string(), prog_ifs })
+        .map(|(id, name, prog_ifs)| Self {
+            id,
+            name: name.to_string(),
+            prog_ifs,
+        })
     }
 }
 
@@ -72,7 +76,10 @@ impl ProgIf {
             tag("\t\t"),
             (terminated(take_u8_from_hex, space1), take_rest_of_line),
         )
-        .map(|(id, name)| Self { id, name: name.to_string() })
+        .map(|(id, name)| Self {
+            id,
+            name: name.to_string(),
+        })
     }
 }
 
@@ -88,7 +95,11 @@ impl Vendor {
             take_rest_of_line,
             many0(Device::parse),
         )
-            .map(|(id, name, devices)| Self { id, name: name.to_string(), devices })
+            .map(|(id, name, devices)| Self {
+                id,
+                name: name.to_string(),
+                devices,
+            })
     }
 }
 
@@ -237,7 +248,10 @@ mod tests {
         let (input, d) = Device::parse(input).unwrap();
         assert_eq!(input, "");
         assert_eq!(d.id, 0x0B60);
-        assert_eq!(d.name, "NVMe DC SSD [Sentinel Rock Plus controller]".to_string());
+        assert_eq!(
+            d.name,
+            "NVMe DC SSD [Sentinel Rock Plus controller]".to_string()
+        );
         assert_eq!(
             d.subsystems,
             vec![
