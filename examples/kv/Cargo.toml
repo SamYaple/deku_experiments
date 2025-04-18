@@ -7,5 +7,15 @@ edition = "2021"
 anyhow = "1"
 deku = "0.18"
 libc = "0.2"
-nvme = { version = "0.1.0", path = "../../projects/nvme" }
-vfio = { version = "0.1.0", path = "../../projects/vfio" }
+
+[dependencies.nvme]
+version = "0.1.0"
+path = "../../projects/nvme"
+
+[dependencies.vfio]
+version = "0.1.0"
+path = "../../projects/vfio"
+
+[dependencies.pci]
+version = "0.1.0"
+path = "../../projects/pci"

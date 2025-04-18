@@ -4,4 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-deku = "0.18.1"
+anyhow = "1"
+deku = "0.18"
+
+[dependencies.pci-ids]
+version = "0.1.0"
+path = "../pci-ids"

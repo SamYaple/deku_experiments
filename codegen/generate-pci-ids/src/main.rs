@@ -71,7 +71,7 @@ fn gen_progif_enum(class: &Class, sc: &SubClass) -> TokenStream {
     });
 
     quote! {
-        #[derive(Debug, DekuRead, DekuWrite)]
+        #[derive(Debug, PartialEq, DekuRead, DekuWrite)]
         #[deku(id = "prog_if", ctx = "prog_if: u8")]
         pub enum #ident {
             #(#variants,)*
@@ -126,7 +126,7 @@ fn gen_subclass_enum(class: &Class) -> TokenStream {
     });
 
     quote! {
-        #[derive(Debug, DekuRead, DekuWrite)]
+        #[derive(Debug, PartialEq, DekuRead, DekuWrite)]
         #[deku(id = "subclass", ctx = #ctx)]
         pub enum #ident {
             #(#variants,)*
@@ -171,7 +171,7 @@ fn gen_class_enum(pci: &PciIds) -> TokenStream {
     });
 
     quote! {
-        #[derive(Debug, DekuRead, DekuWrite)]
+        #[derive(Debug, PartialEq, DekuRead, DekuWrite)]
         #[deku(id = "class_code", ctx = "class_code: u8, subclass: u8, prog_if: u8")]
         pub enum PciDeviceClass {
             #(#variants,)*

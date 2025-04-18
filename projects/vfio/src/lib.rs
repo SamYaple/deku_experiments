@@ -7,8 +7,7 @@ pub use group::VfioGroup;
 pub mod device;
 pub use device::VfioDevice;
 
-pub mod utils;
-pub use utils::PciAddress;
+pub use pci::PciAddress;
 
 // VFIO definitions (from linux/vfio.h and friends)
 // TODO: generate this in some fun way

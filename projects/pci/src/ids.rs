@@ -1,5 +1,5 @@
 use deku::{DekuRead, DekuWrite};
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "prog_if", ctx = "prog_if: u8")]
 pub enum MassStorageControllerIDEInterfaceProgIf {
     #[deku(id = 0x00)]
@@ -19,7 +19,7 @@ pub enum MassStorageControllerIDEInterfaceProgIf {
     #[deku(id = 0x8F)]
     PCINativeModeControllerSupportsBothChannelsSwitchedToISACompatibilityModeSupportsBusMastering,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "prog_if", ctx = "prog_if: u8")]
 pub enum MassStorageControllerATAControllerProgIf {
     #[deku(id = 0x20)]
@@ -27,7 +27,7 @@ pub enum MassStorageControllerATAControllerProgIf {
     #[deku(id = 0x30)]
     ADMAContinuousOperation,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "prog_if", ctx = "prog_if: u8")]
 pub enum MassStorageControllerSATAControllerProgIf {
     #[deku(id = 0x00)]
@@ -37,13 +37,13 @@ pub enum MassStorageControllerSATAControllerProgIf {
     #[deku(id = 0x02)]
     SerialStorageBus,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "prog_if", ctx = "prog_if: u8")]
 pub enum MassStorageControllerSerialAttachedSCSIControllerProgIf {
     #[deku(id = 0x01)]
     SerialStorageBus,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "prog_if", ctx = "prog_if: u8")]
 pub enum MassStorageControllerNonVolatileMemoryControllerProgIf {
     #[deku(id = 0x01)]
@@ -51,7 +51,7 @@ pub enum MassStorageControllerNonVolatileMemoryControllerProgIf {
     #[deku(id = 0x02)]
     NVMExpress,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "prog_if", ctx = "prog_if: u8")]
 pub enum MassStorageControllerUniversalFlashStorageControllerProgIf {
     #[deku(id = 0x00)]
@@ -59,7 +59,7 @@ pub enum MassStorageControllerUniversalFlashStorageControllerProgIf {
     #[deku(id = 0x01)]
     UFSHCI,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "prog_if", ctx = "prog_if: u8")]
 pub enum DisplayControllerVGACompatibleControllerProgIf {
     #[deku(id = 0x00)]
@@ -67,7 +67,7 @@ pub enum DisplayControllerVGACompatibleControllerProgIf {
     #[deku(id = 0x01)]
     _8514Controller,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "prog_if", ctx = "prog_if: u8")]
 pub enum MemoryControllerCXLProgIf {
     #[deku(id = 0x00)]
@@ -75,7 +75,7 @@ pub enum MemoryControllerCXLProgIf {
     #[deku(id = 0x10)]
     CXLMemoryDeviceCXL2X,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "prog_if", ctx = "prog_if: u8")]
 pub enum BridgePCIBridgeProgIf {
     #[deku(id = 0x00)]
@@ -83,7 +83,7 @@ pub enum BridgePCIBridgeProgIf {
     #[deku(id = 0x01)]
     SubtractiveDecode,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "prog_if", ctx = "prog_if: u8")]
 pub enum BridgeRACEwayBridgeProgIf {
     #[deku(id = 0x00)]
@@ -91,7 +91,7 @@ pub enum BridgeRACEwayBridgeProgIf {
     #[deku(id = 0x01)]
     EndpointMode,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "prog_if", ctx = "prog_if: u8")]
 pub enum BridgeSemiTransparentPCIToPCIBridgeProgIf {
     #[deku(id = 0x40)]
@@ -99,7 +99,7 @@ pub enum BridgeSemiTransparentPCIToPCIBridgeProgIf {
     #[deku(id = 0x80)]
     SecondaryBusTowardsHostCPU,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "prog_if", ctx = "prog_if: u8")]
 pub enum CommunicationControllerSerialControllerProgIf {
     #[deku(id = 0x00)]
@@ -117,7 +117,7 @@ pub enum CommunicationControllerSerialControllerProgIf {
     #[deku(id = 0x06)]
     _16950,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "prog_if", ctx = "prog_if: u8")]
 pub enum CommunicationControllerParallelControllerProgIf {
     #[deku(id = 0x00)]
@@ -131,7 +131,7 @@ pub enum CommunicationControllerParallelControllerProgIf {
     #[deku(id = 0xFE)]
     IEEE1284Target,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "prog_if", ctx = "prog_if: u8")]
 pub enum CommunicationControllerModemProgIf {
     #[deku(id = 0x00)]
@@ -145,7 +145,7 @@ pub enum CommunicationControllerModemProgIf {
     #[deku(id = 0x04)]
     Hayes16750,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "prog_if", ctx = "prog_if: u8")]
 pub enum GenericSystemPeripheralPICProgIf {
     #[deku(id = 0x00)]
@@ -159,7 +159,7 @@ pub enum GenericSystemPeripheralPICProgIf {
     #[deku(id = 0x20)]
     IOXAPIC,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "prog_if", ctx = "prog_if: u8")]
 pub enum GenericSystemPeripheralDMAControllerProgIf {
     #[deku(id = 0x00)]
@@ -169,7 +169,7 @@ pub enum GenericSystemPeripheralDMAControllerProgIf {
     #[deku(id = 0x02)]
     EISADMA,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "prog_if", ctx = "prog_if: u8")]
 pub enum GenericSystemPeripheralTimerProgIf {
     #[deku(id = 0x00)]
@@ -181,7 +181,7 @@ pub enum GenericSystemPeripheralTimerProgIf {
     #[deku(id = 0x03)]
     HPET,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "prog_if", ctx = "prog_if: u8")]
 pub enum GenericSystemPeripheralRTCProgIf {
     #[deku(id = 0x00)]
@@ -189,13 +189,13 @@ pub enum GenericSystemPeripheralRTCProgIf {
     #[deku(id = 0x01)]
     ISARTC,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "prog_if", ctx = "prog_if: u8")]
 pub enum GenericSystemPeripheralTimingCardProgIf {
     #[deku(id = 0x01)]
     TAPTimingCard,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "prog_if", ctx = "prog_if: u8")]
 pub enum InputDeviceControllerGameportControllerProgIf {
     #[deku(id = 0x00)]
@@ -203,7 +203,7 @@ pub enum InputDeviceControllerGameportControllerProgIf {
     #[deku(id = 0x10)]
     Extended,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "prog_if", ctx = "prog_if: u8")]
 pub enum SerialBusControllerFireWireIEEE1394ProgIf {
     #[deku(id = 0x00)]
@@ -211,7 +211,7 @@ pub enum SerialBusControllerFireWireIEEE1394ProgIf {
     #[deku(id = 0x10)]
     OHCI,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "prog_if", ctx = "prog_if: u8")]
 pub enum SerialBusControllerUSBControllerProgIf {
     #[deku(id = 0x00)]
@@ -229,7 +229,7 @@ pub enum SerialBusControllerUSBControllerProgIf {
     #[deku(id = 0xFE)]
     USBDevice,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "prog_if", ctx = "prog_if: u8")]
 pub enum SerialBusControllerIPMIInterfaceProgIf {
     #[deku(id = 0x00)]
@@ -239,7 +239,7 @@ pub enum SerialBusControllerIPMIInterfaceProgIf {
     #[deku(id = 0x02)]
     BTBlockTransfer,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "subclass", ctx = "subclass: u8")]
 pub enum UnclassifiedDeviceSubtype {
     #[deku(id = 0x00)]
@@ -249,7 +249,7 @@ pub enum UnclassifiedDeviceSubtype {
     #[deku(id = 0x05)]
     ImageCoprocessor,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "subclass", ctx = "subclass: u8, prog_if: u8")]
 pub enum MassStorageControllerSubtype {
     #[deku(id = 0x00)]
@@ -281,7 +281,7 @@ pub enum MassStorageControllerSubtype {
     #[deku(id = 0x80)]
     MassStorageController,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "subclass", ctx = "subclass: u8")]
 pub enum NetworkControllerSubtype {
     #[deku(id = 0x00)]
@@ -305,7 +305,7 @@ pub enum NetworkControllerSubtype {
     #[deku(id = 0x80)]
     NetworkController,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "subclass", ctx = "subclass: u8, prog_if: u8")]
 pub enum DisplayControllerSubtype {
     #[deku(id = 0x00)]
@@ -319,7 +319,7 @@ pub enum DisplayControllerSubtype {
     #[deku(id = 0x80)]
     DisplayController,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "subclass", ctx = "subclass: u8")]
 pub enum MultimediaControllerSubtype {
     #[deku(id = 0x00)]
@@ -333,7 +333,7 @@ pub enum MultimediaControllerSubtype {
     #[deku(id = 0x80)]
     MultimediaController,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "subclass", ctx = "subclass: u8, prog_if: u8")]
 pub enum MemoryControllerSubtype {
     #[deku(id = 0x00)]
@@ -345,7 +345,7 @@ pub enum MemoryControllerSubtype {
     #[deku(id = 0x80)]
     MemoryController,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "subclass", ctx = "subclass: u8, prog_if: u8")]
 pub enum BridgeSubtype {
     #[deku(id = 0x00)]
@@ -375,7 +375,7 @@ pub enum BridgeSubtype {
     #[deku(id = 0x80)]
     Bridge,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "subclass", ctx = "subclass: u8, prog_if: u8")]
 pub enum CommunicationControllerSubtype {
     #[deku(id = 0x00)]
@@ -393,7 +393,7 @@ pub enum CommunicationControllerSubtype {
     #[deku(id = 0x80)]
     CommunicationController,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "subclass", ctx = "subclass: u8, prog_if: u8")]
 pub enum GenericSystemPeripheralSubtype {
     #[deku(id = 0x00)]
@@ -415,7 +415,7 @@ pub enum GenericSystemPeripheralSubtype {
     #[deku(id = 0x99)]
     TimingCard(#[deku(ctx = "prog_if")] GenericSystemPeripheralTimingCardProgIf),
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "subclass", ctx = "subclass: u8, prog_if: u8")]
 pub enum InputDeviceControllerSubtype {
     #[deku(id = 0x00)]
@@ -431,7 +431,7 @@ pub enum InputDeviceControllerSubtype {
     #[deku(id = 0x80)]
     InputDeviceController,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "subclass", ctx = "subclass: u8")]
 pub enum DockingStationSubtype {
     #[deku(id = 0x00)]
@@ -439,7 +439,7 @@ pub enum DockingStationSubtype {
     #[deku(id = 0x80)]
     DockingStation,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "subclass", ctx = "subclass: u8")]
 pub enum ProcessorSubtype {
     #[deku(id = 0x00)]
@@ -457,7 +457,7 @@ pub enum ProcessorSubtype {
     #[deku(id = 0x40)]
     CoProcessor,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "subclass", ctx = "subclass: u8, prog_if: u8")]
 pub enum SerialBusControllerSubtype {
     #[deku(id = 0x00)]
@@ -483,7 +483,7 @@ pub enum SerialBusControllerSubtype {
     #[deku(id = 0x80)]
     SerialBusController,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "subclass", ctx = "subclass: u8")]
 pub enum WirelessControllerSubtype {
     #[deku(id = 0x00)]
@@ -503,13 +503,13 @@ pub enum WirelessControllerSubtype {
     #[deku(id = 0x80)]
     WirelessController,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "subclass", ctx = "subclass: u8")]
 pub enum IntelligentControllerSubtype {
     #[deku(id = 0x00)]
     I2O,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "subclass", ctx = "subclass: u8")]
 pub enum SatelliteCommunicationsControllerSubtype {
     #[deku(id = 0x01)]
@@ -521,7 +521,7 @@ pub enum SatelliteCommunicationsControllerSubtype {
     #[deku(id = 0x04)]
     SatelliteDataCommunicationController,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "subclass", ctx = "subclass: u8")]
 pub enum EncryptionControllerSubtype {
     #[deku(id = 0x00)]
@@ -531,7 +531,7 @@ pub enum EncryptionControllerSubtype {
     #[deku(id = 0x80)]
     EncryptionController,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "subclass", ctx = "subclass: u8")]
 pub enum SignalProcessingControllerSubtype {
     #[deku(id = 0x00)]
@@ -545,7 +545,7 @@ pub enum SignalProcessingControllerSubtype {
     #[deku(id = 0x80)]
     SignalProcessingController,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "subclass", ctx = "subclass: u8")]
 pub enum ProcessingAcceleratorsSubtype {
     #[deku(id = 0x00)]
@@ -553,7 +553,7 @@ pub enum ProcessingAcceleratorsSubtype {
     #[deku(id = 0x01)]
     SNIASmartDataAcceleratorInterfaceSDXIController,
 }
-#[derive(Debug, DekuRead, DekuWrite)]
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(id = "class_code", ctx = "class_code: u8, subclass: u8, prog_if: u8")]
 pub enum PciDeviceClass {
     #[deku(id = 0x00)]

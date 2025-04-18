@@ -139,6 +139,7 @@ dependencies = [
  "deku",
  "libc",
  "nvme",
+ "pci",
  "vfio",
 ]
 
@@ -186,7 +187,9 @@ dependencies = [
 name = "pci"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "deku",
+ "pci-ids",
 ]
 
 [[package]]

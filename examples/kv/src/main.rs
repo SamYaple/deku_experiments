@@ -1,7 +1,24 @@
 mod dma;
-use anyhow::Result;
+use anyhow::{bail, Result};
 use nvme::NvmeController;
-use vfio::{PciAddress, VfioContainer, VfioGroup};
+use vfio::{VfioContainer, VfioGroup, VfioDevice};
+use pci::{PciAddress, PciDevice};
+use deku::{DekuContainerRead, DekuContainerWrite, DekuRead, DekuWrite};
+use std::os::fd::AsRawFd;
+
+fn pci_config_from_vfio_device(device: &VfioDevice) -> Result<PciDevice> {
+    let region_info = device.get_region_info(7)?;
+    let mut bytes = PciDevice::default().to_bytes()?;
+
+    let ret = unsafe { libc::pread(device.as_raw_fd(), bytes.as_mut_ptr() as *mut _, PciDevice::SERIALIZED_BYTE_SIZE, region_info.get_offset() as i64) };
+    if ret < 0 {
+        bail! {std::io::Error::last_os_error()};
+    }
+
+    let ((_, remaining), pci_device) = PciDevice::from_bytes((&bytes, 0))?;
+    debug_assert!(remaining == 0);
+    Ok(pci_device)
+}
 
 fn main() -> Result<()> {
     let pci_address = &PciAddress::new("02:00.0")?;
@@ -15,8 +32,10 @@ fn main() -> Result<()> {
     //dbg![group_status.get_flags()];
 
     let device = group.get_device(pci_address)?;
-    let pci_device = vfio::utils::PciDevice::new(device)?;
-    dbg![&pci_device];
+    let pci_device_from_vfio = pci_config_from_vfio_device(&device)?;
+    let pci_device_from_sysfs = PciDevice::new(pci_address)?;
+    assert_eq!(pci_device_from_vfio, pci_device_from_sysfs);
+
 
     //let device_info = device.get_device_info()?;
     //dbg![device_info.get_flags()];
