@@ -1,7 +1,4 @@
 mod parser;
-use anyhow::Result;
-use memmap2::Mmap;
-use std::fs::OpenOptions;
 
 #[derive(Debug, PartialEq)]
 pub struct PciIds {
@@ -50,16 +47,9 @@ pub struct Subsystem {
     pub name: String,
 }
 
-pub fn load_from_file() -> Result<PciIds> {
-    let file = OpenOptions::new()
-        .read(true)
-        .open("/usr/share/hwdata/pci.ids")?;
-    let mmap_file = unsafe { Mmap::map(&file)? };
-    let input = std::str::from_utf8(&mmap_file)?;
-    // It was absolutely not neccesary to mmap this file. We could have read it into a String.
-    // This seemed more fun though...
-
-    let (input, pci_ids) = PciIds::parse(input).unwrap();
+pub fn load_from_file() -> std::io::Result<PciIds> {
+    let pci_ids_file_string = std::fs::read_to_string("/usr/share/hwdata/pci.ids")?;
+    let (input, pci_ids) = PciIds::parse(&pci_ids_file_string).unwrap();
     assert_eq!(input, "");
     Ok(pci_ids)
 }

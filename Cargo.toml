@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
+    "codegen/generate-pci-ids",
     "examples/kv",
     "projects/nvme",
     "projects/pci",

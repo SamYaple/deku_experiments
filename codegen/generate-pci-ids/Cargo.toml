@@ -1,0 +1,11 @@
+[package]
+name = "generate-pci-ids"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+proc-macro2 = "1"
+quote = "1"
+syn = { version = "2", features = ["full"] }
+pci-ids = { version = "0.1.0", path = "../../projects/pci-ids" }
+anyhow = "1.0.98"
