@@ -410,6 +410,8 @@ pub enum GenericSystemPeripheralSubtype {
     SDHostController,
     #[deku(id = 0x06)]
     IOMMU,
+    #[deku(id = 0x07)]
+    RCEC,
     #[deku(id = 0x80)]
     SystemPeripheral,
     #[deku(id = 0x99)]

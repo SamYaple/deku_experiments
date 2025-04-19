@@ -50,6 +50,79 @@ pub struct PciCommandRegister {
 }
 
 #[derive(Debug, Default, PartialEq, DekuRead, DekuWrite)]
+pub struct PciBaseLayout {
+    bar: [u32; 6],
+    cardbus_cis_pointer: u32,
+    subsystem_vendor_id: u16,
+    subsystem_id: u16,
+    expansion_rom_base_address: u32,
+    capabilities_pointer: u8,
+    reserved1: [u8; 3],
+    reserved2: u32,
+    interrupt_line: u8,
+    interrupt_pin: u8,
+    min_grant: u8,
+    max_latency: u8,
+
+    //#[deku(ctx = "*subsystem_vendor_id, *subsystem_id")]
+    //subsystem: PciSubsystem,
+}
+
+#[derive(Debug, Default, PartialEq, DekuRead, DekuWrite)]
+pub struct PciToPciBridgeLayout {
+    bar: [u32; 2],
+    primary_bus_number: u8,
+    secondary_bus_number: u8,
+    subordinate_bus_number: u8,
+    secondary_latency_timer: u8,
+    io_base: u8,
+    io_limit: u8,
+    secondary_status: u16,
+    memory_base: u16,
+    memory_limit: u16,
+    prefetchable_memory_base: u16,
+    prefetchable_memory_limit: u16,
+    prefetchable_base_upper: u32,
+    prefetchable_limit_upper: u32,
+    io_base_upper: u16,
+    io_limit_upper: u16,
+    capabilities_pointer: u8,
+    reserved: [u8; 3],
+    expansion_rom_base_address: u32,
+    interrupt_line: u8,
+    interrupt_pin: u8,
+    bridge_control: u16,
+}
+
+#[derive(Debug, PartialEq, DekuRead, DekuWrite)]
+#[deku(id = "layout", ctx = "layout: u8")]
+pub enum PciLayout {
+    #[deku(id = 0x00)] Type0(PciBaseLayout),
+    #[deku(id = 0x01)] Type1(PciToPciBridgeLayout),
+    //#[deku(id = 0x02)] Type2(PciCardBusLayout),
+}
+
+impl Default for PciLayout {
+    fn default() -> Self {
+        Self::Type0(PciBaseLayout::default())
+    }
+}
+
+#[derive(Debug, Default, PartialEq, DekuRead, DekuWrite)]
+pub struct PciBIST {
+    #[deku(bits = 1)] supported: bool,
+    #[deku(bits = 1)] start_test: bool,
+    #[deku(bits = 2)] _reserved_05_04: u8,
+    #[deku(bits = 4)] failure_code: u8,
+}
+
+#[derive(Debug, Default, PartialEq, DekuRead, DekuWrite)]
+pub struct PciHeader {
+    #[deku(bits = 1)] multifunction: bool,
+    #[deku(bits = 7)] layout: u8,
+}
+
+#[derive(Debug, Default, PartialEq, DekuRead, DekuWrite)]
 pub struct PciDevice {
     vendor_id: u16,
     device_id: u16,
@@ -61,23 +134,25 @@ pub struct PciDevice {
     class_code: u8,
     cache_line_size: u8,
     latency_timer: u8,
-    header_type: u8,
-    bist: u8,
+    header_type: PciHeader,
+    bist: PciBIST,
+
+    #[deku(ctx = "header_type.layout")]
+    layout: PciLayout,
 
     // Any fields below this line are not part of the PCI spec, they are
     // derived based on the context of the previously parsed values.
     // No additional bits are read or written by Deku to create this field,
     #[deku(ctx = "*class_code, *subclass, *prog_if")]
-    pci_id: PciDeviceClass,
+    pub pci_id: PciDeviceClass,
 }
 
 impl PciDevice {
-    pub const SERIALIZED_BYTE_SIZE: usize = 16;
+    pub const SERIALIZED_BYTE_SIZE: usize = 64;
 
     pub fn new(address: &PciAddress) -> Result<Self> {
-        // open format!{"/sys/bus/pci/devices/{address}/config"} for bytes
-        let p = std::path::PathBuf::from(format!("/sys/bus/pci/devices/{address}/config"));
-        let bytes = std::fs::read(&p)?;
+        let path = std::path::PathBuf::from(format!("/sys/bus/pci/devices/{address}/config"));
+        let bytes = std::fs::read(&path)?;
         let ((_, remaining), pci_device) = Self::from_bytes((&bytes, 0))?;
         debug_assert!(remaining == 0);
         Ok(pci_device)

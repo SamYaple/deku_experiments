@@ -20,7 +20,24 @@ fn pci_config_from_vfio_device(device: &VfioDevice) -> Result<PciDevice> {
     Ok(pci_device)
 }
 
+fn walk_all_devices() -> Result<()> {
+    let base_path = std::path::Path::new("/sys/bus/pci/devices");
+    for entry in std::fs::read_dir(base_path)? {
+        let entry = entry?;
+        if let Some(address) = entry.file_name().to_str() {
+            let pci_address = &PciAddress::new(address)?;
+            let Ok(pci_device) = PciDevice::new(pci_address) else {
+                eprintln!["skipping on parse failure: {}", address];
+                continue;
+            };
+            dbg![pci_device];
+        }
+    }
+    Ok(())
+}
+
 fn main() -> Result<()> {
+    walk_all_devices()?;
     let pci_address = &PciAddress::new("02:00.0")?;
     let group_id = VfioGroup::get_id_from_address(pci_address)?;
 
@@ -35,6 +52,7 @@ fn main() -> Result<()> {
     let pci_device_from_vfio = pci_config_from_vfio_device(&device)?;
     let pci_device_from_sysfs = PciDevice::new(pci_address)?;
     assert_eq!(pci_device_from_vfio, pci_device_from_sysfs);
+    //dbg![pci_device_from_vfio];
 
 
     //let device_info = device.get_device_info()?;
