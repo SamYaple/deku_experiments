@@ -1,7 +1,6 @@
 pub mod ids;
 use ids::PciDeviceClass;
 
-use pci_ids::PciIds;
 use anyhow::{Result, bail};
 use deku::{DekuContainerRead, DekuContainerWrite, DekuRead, DekuWrite};
 

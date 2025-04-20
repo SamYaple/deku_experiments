@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "codegen/generate-pci-ids",
     "examples/kv",
+    "examples/dump-pci",
     "projects/nvme",
     "projects/pci",
     "projects/pci-ids",
