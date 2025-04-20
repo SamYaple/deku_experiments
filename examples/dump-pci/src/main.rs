@@ -11,7 +11,8 @@ fn main() -> Result<()> {
                 eprintln!["skipping on parse failure: {}", address];
                 continue;
             };
-            dbg![pci_device];
+            println!["Successfully parsed device at {address}"];
+            dbg![pci_device]; // raw dump device until pretty formatter is done
         }
     }
     Ok(())
